@@ -1,4 +1,4 @@
-package dijkstra
+package queue
 
 // Signed represent all go signed integers type
 type Signed interface {
