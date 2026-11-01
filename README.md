@@ -84,7 +84,7 @@ distances, previous := dijkstra.ShortestPath(g, 0, -1)
 
 ## 🖥️ Running the demo program
 
-The repository includes a small command, [`cmd/godijkstra`](cmd/godijkstra/main.go), that solves this sample graph:
+The repository includes a small command, [`cmd/dijkstra`](cmd/dijkstra/main.go), that solves this sample graph:
 
 ```text
      (4.0)             (5.0)
@@ -104,21 +104,21 @@ It looks for the cheapest route from node `0` to node `4`.
 From the root of the repository:
 
 ```bash
-go run ./cmd/godijkstra
+go run ./cmd/dijkstra
 ```
 
 ### 🔨 Build a binary
 
 ```bash
-go build -o godijkstra ./cmd/godijkstra
-./godijkstra
+go build -o dijkstra ./cmd/dijkstra
+./dijkstra
 ```
 
 ### 🌍 Install it in your `$GOPATH/bin`
 
 ```bash
-go install github.com/christiangda/go-dijkstra-algorithm/cmd/godijkstra@latest
-godijkstra
+go install github.com/christiangda/go-dijkstra-algorithm/cmd/dijkstra@latest
+dijkstra
 ```
 
 ### 📤 Expected output
@@ -130,7 +130,7 @@ Shortest path to node 4: 0->2->1->3->4
 
 Going `0 → 2 → 1` (2 + 1 = 3) is cheaper than the direct edge `0 → 1` (4). Then `1 → 3 → 4` adds 5 + 2, for a total of **10**.
 
-> 📝 The program takes no flags or arguments. To try another graph, edit the edges, `startNode` and `targetNode` in [`main.go`](cmd/godijkstra/main.go).
+> 📝 The program takes no flags or arguments. To try another graph, edit the edges, `startNode` and `targetNode` in [`main.go`](cmd/dijkstra/main.go).
 
 ## 📖 API overview
 
@@ -186,7 +186,7 @@ item := heap.Pop(pq).(*queue.Item[string, int]) // "fix bug" 🐛
 ```text
 .
 ├── cmd/
-│   └── godijkstra/      # 🖥️ demo command
+│   └── dijkstra/        # 🖥️ demo command
 │       └── main.go
 ├── dijkstra/            # 🧭 ShortestPath and Path
 ├── graph/               # 🕸️ Graph and Edge types

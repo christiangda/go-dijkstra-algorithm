@@ -8,7 +8,7 @@ import (
 	"github.com/christiangda/go-dijkstra-algorithm/graph"
 )
 
-// sampleGraph returns the same graph used by cmd/godijkstra.
+// sampleGraph returns the same graph used by cmd/dijkstra.
 func sampleGraph() graph.Graph {
 	g := make(graph.Graph, 5)
 	g[0] = []graph.Edge{{To: 1, Weight: 4.0}, {To: 2, Weight: 2.0}}
