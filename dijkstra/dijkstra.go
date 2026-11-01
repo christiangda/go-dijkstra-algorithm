@@ -13,22 +13,18 @@ import (
 )
 
 func ShortestPath(g graph.Graph, startNode, targetNode int) (distances []float64, previous []int) {
-	if startNode == targetNode {
-		return []float64{0}, []int{startNode}
-	}
-
 	graphLength := g.Len()
 	distances = make([]float64, graphLength)
 	previous = make([]int, graphLength)
-
-	if startNode < 0 || startNode >= graphLength {
-		return distances, previous
-	}
 
 	// initialize distances with infinite (math.Inf) and previous with -1
 	for i := range graphLength {
 		distances[i] = math.Inf(1)
 		previous[i] = -1
+	}
+
+	if startNode < 0 || startNode >= graphLength {
+		return distances, previous
 	}
 
 	distances[startNode] = 0.0
@@ -92,8 +88,9 @@ func Path(previous []int, startNode, targetNode int) (path []int) {
 	path = make([]int, 0, len(previous))
 	curr := targetNode
 
-	// we traverse in reverse using the`previous` slice
-	for curr != -1 {
+	// we traverse in reverse using the`previous` slice, a valid path never has
+	// more than len(previous) nodes, so the bound protects against cycles
+	for curr != -1 && len(path) < len(previous) {
 		path = append(path, curr)
 		if curr == startNode {
 			break
