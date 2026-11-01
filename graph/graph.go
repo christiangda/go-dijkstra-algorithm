@@ -23,7 +23,7 @@ type Edge struct {
 
 	// Weight is the cost of traveling through the edge. It must be greater
 	// than or equal to zero, because Dijkstra's algorithm does not support
-	// negative weights.
+	// negative weights; dijkstra.ShortestPath returns an error otherwise.
 	Weight float64
 }
 

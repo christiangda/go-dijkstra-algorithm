@@ -15,7 +15,11 @@
 //	g[0] = []graph.Edge{{To: 1, Weight: 4}, {To: 2, Weight: 1}}
 //	g[2] = []graph.Edge{{To: 1, Weight: 2}}
 //
-//	distances, previous := dijkstra.ShortestPath(g, 0, 1)
+//	distances, previous, err := dijkstra.ShortestPath(g, 0, 1)
+//	if err != nil {
+//		return err // a weight is negative or NaN
+//	}
+//
 //	path := dijkstra.Path(previous, 0, 1) // [0 2 1], cost distances[1] == 3
 //
 // # Implementation
@@ -33,12 +37,38 @@ package dijkstra
 
 import (
 	"container/heap"
+	"errors"
+	"fmt"
 	"math"
 	"slices"
 
 	"github.com/christiangda/go-dijkstra-algorithm/graph"
 	"github.com/christiangda/go-dijkstra-algorithm/queue"
 )
+
+// ErrInvalidWeight is returned by [ShortestPath] when the graph has an edge
+// whose weight is negative or NaN. Dijkstra's algorithm only supports
+// non-negative weights; use an algorithm such as Bellman-Ford for graphs with
+// negative weights.
+//
+// The returned error wraps ErrInvalidWeight with the offending edge, so check
+// it with [errors.Is].
+var ErrInvalidWeight = errors.New("dijkstra: edge weight must be non-negative")
+
+// validateWeights returns an error wrapping ErrInvalidWeight for the first
+// edge of g whose weight is negative or NaN.
+func validateWeights(g graph.Graph) error {
+	for from, edges := range g {
+		for _, edge := range edges {
+			// written as !(>= 0) so NaN, which fails every comparison, is rejected too
+			if !(edge.Weight >= 0) {
+				return fmt.Errorf("%w: edge %d -> %d has weight %v", ErrInvalidWeight, from, edge.To, edge.Weight)
+			}
+		}
+	}
+
+	return nil
+}
 
 // ShortestPath runs Dijkstra's algorithm on g from startNode and stops as soon
 // as the shortest distance to targetNode is known.
@@ -61,9 +91,14 @@ import (
 // previous entry is -1. Edges that point to a node outside of the graph are
 // ignored.
 //
-// Edge weights must be non-negative. Negative weights are not validated and
-// produce incorrect results; use an algorithm such as Bellman-Ford for them.
-func ShortestPath(g graph.Graph, startNode, targetNode int) (distances []float64, previous []int) {
+// Every edge weight must be non-negative. Before searching, ShortestPath
+// checks every edge of g, and if any weight is negative or NaN it returns nil
+// slices and an error wrapping [ErrInvalidWeight].
+func ShortestPath(g graph.Graph, startNode, targetNode int) (distances []float64, previous []int, err error) {
+	if err := validateWeights(g); err != nil {
+		return nil, nil, err
+	}
+
 	graphLength := g.Len()
 	distances = make([]float64, graphLength)
 	previous = make([]int, graphLength)
@@ -75,7 +110,7 @@ func ShortestPath(g graph.Graph, startNode, targetNode int) (distances []float64
 	}
 
 	if startNode < 0 || startNode >= graphLength {
-		return distances, previous
+		return distances, previous, nil
 	}
 
 	distances[startNode] = 0.0
@@ -118,7 +153,7 @@ func ShortestPath(g graph.Graph, startNode, targetNode int) (distances []float64
 		}
 	}
 
-	return distances, previous
+	return distances, previous, nil
 }
 
 // Path rebuilds the shortest route from startNode to targetNode using the

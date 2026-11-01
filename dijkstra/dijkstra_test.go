@@ -1,6 +1,7 @@
 package dijkstra
 
 import (
+	"errors"
 	"math"
 	"slices"
 	"testing"
@@ -97,7 +98,10 @@ func TestShortestPath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			distances, previous := ShortestPath(tt.graph, tt.start, tt.target)
+			distances, previous, err := ShortestPath(tt.graph, tt.start, tt.target)
+			if err != nil {
+				t.Fatalf("ShortestPath() error = %v", err)
+			}
 
 			if !slices.Equal(distances, tt.wantDistances) {
 				t.Errorf("distances = %v, want %v", distances, tt.wantDistances)
@@ -109,6 +113,44 @@ func TestShortestPath(t *testing.T) {
 
 			if path := Path(previous, tt.start, tt.target); !slices.Equal(path, tt.wantPath) {
 				t.Errorf("Path() = %v, want %v", path, tt.wantPath)
+			}
+		})
+	}
+}
+
+func TestShortestPathInvalidWeight(t *testing.T) {
+	tests := []struct {
+		name   string
+		weight float64
+	}{
+		{name: "negative", weight: -1},
+		{name: "negative zero is valid", weight: math.Copysign(0, -1)},
+		{name: "negative infinity", weight: math.Inf(-1)},
+		{name: "NaN", weight: math.NaN()},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := sampleGraph()
+			// the invalid edge is on a node that is never reached from node 0
+			g[4] = []graph.Edge{{To: 0, Weight: tt.weight}}
+
+			distances, previous, err := ShortestPath(g, 0, 4)
+
+			if tt.weight >= 0 {
+				if err != nil {
+					t.Fatalf("ShortestPath() error = %v, want nil", err)
+				}
+
+				return
+			}
+
+			if !errors.Is(err, ErrInvalidWeight) {
+				t.Fatalf("ShortestPath() error = %v, want %v", err, ErrInvalidWeight)
+			}
+
+			if distances != nil || previous != nil {
+				t.Errorf("ShortestPath() = %v, %v, want nil slices", distances, previous)
 			}
 		})
 	}
