@@ -30,7 +30,7 @@ A simple, dependency-free implementation of **Dijkstra's shortest path algorithm
 - 🎯 **Early exit**: stops as soon as the target node's distance is final.
 - 🧹 **Lazy deletion**: no "decrease-key" needed; stale queue entries are skipped.
 - 🧬 **Generic priority queue** (`queue.PriorityQueue[V, K]`) you can reuse for your own types.
-- 🛡️ **Safe on bad input**: out-of-range nodes and edges never panic.
+- 🛡️ **Safe on bad input**: out-of-range nodes and edges never panic, and negative or `NaN` weights return an error.
 - 🪶 **Zero dependencies**: only the Go standard library.
 - ✅ **100% test coverage** on the library packages, plus examples and benchmarks.
 
@@ -38,7 +38,7 @@ A simple, dependency-free implementation of **Dijkstra's shortest path algorithm
 
 Dijkstra's algorithm, created by **Edsger W. Dijkstra** in 1956, finds the cheapest path from a single **start node** to the other nodes of a **weighted graph**. It works as long as every edge weight is **non-negative** (`>= 0`).
 
-> ⚠️ **Negative weights are not supported.** They are not validated and give wrong results. Use an algorithm such as Bellman-Ford for graphs with negative weights.
+> ⚠️ **Negative weights are not supported.** `ShortestPath` returns an error wrapping `dijkstra.ErrInvalidWeight` if any edge weight is negative or `NaN`. Use an algorithm such as Bellman-Ford for graphs with negative weights.
 
 ## 📦 Installation
 
@@ -57,6 +57,7 @@ package main
 
 import (
     "fmt"
+    "log"
 
     "github.com/christiangda/go-dijkstra-algorithm/dijkstra"
     "github.com/christiangda/go-dijkstra-algorithm/graph"
@@ -69,7 +70,10 @@ func main() {
     g[0] = []graph.Edge{{To: 1, Weight: 4.0}, {To: 2, Weight: 1.0}}
     g[2] = []graph.Edge{{To: 1, Weight: 2.0}}
 
-    distances, previous := dijkstra.ShortestPath(g, 0, 1)
+    distances, previous, err := dijkstra.ShortestPath(g, 0, 1)
+    if err != nil {
+        log.Fatal(err) // a weight is negative or NaN
+    }
 
     fmt.Println("cost:", distances[1])                // cost: 3
     fmt.Println("path:", dijkstra.Path(previous, 0, 1)) // path: [0 2 1]
@@ -79,7 +83,7 @@ func main() {
 💡 Need the distance to **every** node? Pass a target that doesn't exist, such as `-1`, to turn off the early exit:
 
 ```go
-distances, previous := dijkstra.ShortestPath(g, 0, -1)
+distances, previous, err := dijkstra.ShortestPath(g, 0, -1)
 ```
 
 ## 🖥️ Running the demo program
@@ -140,8 +144,9 @@ Full documentation is on [pkg.go.dev](https://pkg.go.dev/github.com/christiangda
 
 | Function | Description |
 | --- | --- |
-| `ShortestPath(g, startNode, targetNode) (distances []float64, previous []int)` | Runs Dijkstra from `startNode`. Both slices have length `g.Len()`. `distances[n]` is the cost to reach `n` (`+Inf` if it was not reached) and `previous[n]` is the node before `n` on that path (`-1` if none). |
+| `ShortestPath(g, startNode, targetNode) (distances []float64, previous []int, err error)` | Runs Dijkstra from `startNode`. Both slices have length `g.Len()`. `distances[n]` is the cost to reach `n` (`+Inf` if it was not reached) and `previous[n]` is the node before `n` on that path (`-1` if none). Returns an error wrapping `ErrInvalidWeight` if any weight is negative or `NaN`. |
 | `Path(previous, startNode, targetNode) []int` | Rebuilds the route `startNode → … → targetNode` from `previous`. Returns `nil` if the target is unreachable or out of range. |
+| `ErrInvalidWeight` | Error returned by `ShortestPath` for negative or `NaN` weights. Check it with `errors.Is(err, dijkstra.ErrInvalidWeight)`. |
 
 > ℹ️ Because of the early exit, only `distances[targetNode]` and the distances of the nodes on its path are guaranteed to be final.
 
@@ -169,12 +174,13 @@ item := heap.Pop(pq).(*queue.Item[string, int]) // "fix bug" 🐛
 
 ## ⚙️ How it works
 
-1. 🏁 Every distance starts at `+Inf` and every predecessor at `-1`. The start node's distance is set to `0` and the start node is pushed onto the priority queue.
-2. 🔁 Pop the node with the smallest tentative distance.
+1. 🔍 Every edge weight is checked first. Negative or `NaN` weights stop the search with `ErrInvalidWeight`.
+2. 🏁 Every distance starts at `+Inf` and every predecessor at `-1`. The start node's distance is set to `0` and the start node is pushed onto the priority queue.
+3. 🔁 Pop the node with the smallest tentative distance.
    - 🗑️ If its recorded distance is already lower, the entry is stale: skip it (lazy deletion).
    - 🎯 If it is the target, stop (early exit).
-3. 🔗 For each outgoing edge, if `distance[current] + weight` is lower than the neighbor's distance, update the neighbor's distance and predecessor, then push the neighbor onto the queue.
-4. 🧵 Once the search ends, `Path` follows `previous` backwards from the target to the start and reverses the result.
+4. 🔗 For each outgoing edge, if `distance[current] + weight` is lower than the neighbor's distance, update the neighbor's distance and predecessor, then push the neighbor onto the queue.
+5. 🧵 Once the search ends, `Path` follows `previous` backwards from the target to the start and reverses the result.
 
 | | Complexity |
 | --- | --- |

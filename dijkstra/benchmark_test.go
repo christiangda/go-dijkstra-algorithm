@@ -52,7 +52,10 @@ func BenchmarkShortestPath(b *testing.B) {
 func BenchmarkPath(b *testing.B) {
 	for _, n := range []int{1_000, 100_000} {
 		g := randomGraph(n, 5)
-		_, previous := ShortestPath(g, 0, -1)
+		_, previous, err := ShortestPath(g, 0, -1)
+		if err != nil {
+			b.Fatal(err)
+		}
 
 		b.Run(fmt.Sprintf("nodes=%d", n), func(b *testing.B) {
 			for b.Loop() {

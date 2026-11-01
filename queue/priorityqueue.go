@@ -14,7 +14,10 @@
 // The item with the lowest Priority is always popped first.
 package queue
 
-import "container/heap"
+import (
+	"cmp"
+	"container/heap"
+)
 
 // Compile-time check that *PriorityQueue satisfies heap.Interface.
 var _ heap.Interface = (*PriorityQueue[int, float64])(nil)
@@ -34,9 +37,10 @@ type Item[V, K comparable] struct {
 	Index int
 }
 
-// PriorityQueue is a min-heap of *[Item] ordered by Priority.
+// PriorityQueue is a min-heap of *[Item] ordered by Priority, which can be of
+// any [cmp.Ordered] type (integers, floats or strings).
 // It implements [heap.Interface].
-type PriorityQueue[V comparable, K Ordered] []*Item[V, K]
+type PriorityQueue[V comparable, K cmp.Ordered] []*Item[V, K]
 
 // Len returns the number of items in the priority queue.
 // It is part of [sort.Interface].

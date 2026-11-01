@@ -13,6 +13,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
@@ -39,7 +40,11 @@ func main() {
 	startNode := 0
 	targetNode := 4
 
-	distances, previous := dijkstra.ShortestPath(g, startNode, targetNode)
+	distances, previous, err := dijkstra.ShortestPath(g, startNode, targetNode)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 
 	path := dijkstra.Path(previous, startNode, targetNode)
 
