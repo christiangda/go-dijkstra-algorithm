@@ -1,3 +1,14 @@
+// Command godijkstra is a small demo of the dijkstra package.
+//
+// It builds a sample directed, weighted graph of five nodes, finds the
+// cheapest route from node 0 to node 4 and prints its cost and path:
+//
+//	$ go run ./cmd/godijkstra
+//	Cost to node 4: 10.00
+//	Shortest path to node 4: 0->2->1->3->4
+//
+// The program takes no flags or arguments; edit the graph in main to try
+// other inputs.
 package main
 
 import (
